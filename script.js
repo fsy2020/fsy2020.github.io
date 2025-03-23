@@ -21,8 +21,14 @@ themeSwitch.addEventListener('click', () => {
 
 // Blog functionality
 const blogList = document.getElementById('blog-list');
+const tagFilters = document.getElementById('tag-filters');
+const clearFilters = document.getElementById('clear-filters');
 const searchInput = document.getElementById('search-input');
 const searchButton = document.getElementById('search-button');
+
+let allTags = new Set();
+let activeTags = new Set();
+let blogPosts = [];
 
 // Function to fetch and parse markdown files
 async function fetchMarkdownFile(filename) {
@@ -51,6 +57,14 @@ function parseFrontmatter(markdown) {
         }
     });
 
+    // Parse tags if they exist
+    if (frontmatter.tags) {
+        frontmatter.tags = frontmatter.tags
+            .replace(/[\[\]]/g, '')
+            .split(',')
+            .map(tag => tag.trim());
+    }
+
     return { frontmatter, content };
 }
 
@@ -60,11 +74,17 @@ function createBlogPostCard(postData) {
     const card = document.createElement('div');
     card.className = 'blog-card';
     
+    const tagButtons = frontmatter.tags
+        ? frontmatter.tags
+            .map(tag => `<button class="tag">${tag}</button>`)
+            .join('')
+        : '';
+    
     card.innerHTML = `
         <h3>${frontmatter.title}</h3>
         <div class="blog-meta">
             <span class="date">${frontmatter.date}</span>
-            <span class="tags">${frontmatter.tags}</span>
+            <div class="tags">${tagButtons}</div>
         </div>
         <div class="blog-preview">${marked.parse(content.split('\n').slice(0, 3).join('\n'))}</div>
         <a href="#" class="read-more">Read More</a>
@@ -73,35 +93,84 @@ function createBlogPostCard(postData) {
     return card;
 }
 
-// Function to load blog posts
-async function loadBlogPosts() {
-    const post = await fetchMarkdownFile('first-post.md');
-    if (post) {
-        const postData = parseFrontmatter(post);
-        const card = createBlogPostCard(postData);
-        blogList.appendChild(card);
-    }
-}
-
-// Search functionality
-function performSearch(query) {
-    const blogCards = document.querySelectorAll('.blog-card');
-    query = query.toLowerCase();
-
-    blogCards.forEach(card => {
-        const text = card.textContent.toLowerCase();
-        card.style.display = text.includes(query) ? 'block' : 'none';
+// Function to update tag filters
+function updateTagFilters() {
+    tagFilters.innerHTML = Array.from(allTags)
+        .map(tag => `<button class="tag ${activeTags.has(tag) ? 'active' : ''}">${tag}</button>`)
+        .join('');
+    
+    // Add click event listeners to tags
+    tagFilters.querySelectorAll('.tag').forEach(tagButton => {
+        tagButton.addEventListener('click', () => {
+            const tag = tagButton.textContent;
+            if (activeTags.has(tag)) {
+                activeTags.delete(tag);
+            } else {
+                activeTags.add(tag);
+            }
+            filterBlogPosts();
+            updateTagFilters();
+        });
     });
 }
 
+// Function to filter blog posts
+function filterBlogPosts() {
+    const searchQuery = searchInput.value.toLowerCase();
+    const blogCards = document.querySelectorAll('.blog-card');
+    
+    blogCards.forEach(card => {
+        const text = card.textContent.toLowerCase();
+        const cardTags = Array.from(card.querySelectorAll('.tags .tag'))
+            .map(tag => tag.textContent);
+        
+        const matchesSearch = text.includes(searchQuery);
+        const matchesTags = activeTags.size === 0 || 
+            cardTags.some(tag => activeTags.has(tag));
+        
+        card.style.display = matchesSearch && matchesTags ? 'block' : 'none';
+    });
+}
+
+// Function to load blog posts
+async function loadBlogPosts() {
+    const posts = ['first-post.md']; // Add more posts here as they're created
+    
+    for (const filename of posts) {
+        const post = await fetchMarkdownFile(filename);
+        if (post) {
+            const postData = parseFrontmatter(post);
+            blogPosts.push(postData);
+            
+            // Collect all unique tags
+            if (postData.frontmatter.tags) {
+                postData.frontmatter.tags.forEach(tag => allTags.add(tag));
+            }
+            
+            const card = createBlogPostCard(postData);
+            blogList.appendChild(card);
+        }
+    }
+    
+    updateTagFilters();
+}
+
+// Clear filters
+clearFilters.addEventListener('click', () => {
+    activeTags.clear();
+    searchInput.value = '';
+    filterBlogPosts();
+    updateTagFilters();
+});
+
 // Add search event listeners
 searchButton.addEventListener('click', () => {
-    performSearch(searchInput.value);
+    filterBlogPosts();
 });
 
 searchInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
-        performSearch(searchInput.value);
+        filterBlogPosts();
     }
 });
 
