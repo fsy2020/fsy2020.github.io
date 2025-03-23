@@ -1,8 +1,8 @@
-// 暗色模式切换
+// Dark mode toggle
 const themeSwitch = document.getElementById('theme-switch');
 const body = document.body;
 
-// 检查本地存储中的主题设置
+// Check theme settings in local storage
 const savedTheme = localStorage.getItem('theme');
 if (savedTheme) {
     body.setAttribute('data-theme', savedTheme);
@@ -16,73 +16,96 @@ themeSwitch.addEventListener('click', () => {
     body.setAttribute('data-theme', newTheme);
     themeSwitch.textContent = newTheme === 'dark' ? '☀️' : '🌙';
     
-    // 保存主题设置到本地存储
     localStorage.setItem('theme', newTheme);
 });
 
-// 搜索功能
+// Blog functionality
+const blogList = document.getElementById('blog-list');
 const searchInput = document.getElementById('search-input');
 const searchButton = document.getElementById('search-button');
-const projectGrid = document.querySelector('.project-grid');
 
-// 示例项目数据
-const projects = [
-    {
-        title: '项目一',
-        description: '这是项目一的描述...',
-        link: '#'
-    },
-    {
-        title: '项目二',
-        description: '这是项目二的描述...',
-        link: '#'
-    },
-    {
-        title: '项目三',
-        description: '这是项目三的描述...',
-        link: '#'
+// Function to fetch and parse markdown files
+async function fetchMarkdownFile(filename) {
+    try {
+        const response = await fetch(`blogs/${filename}`);
+        const text = await response.text();
+        return text;
+    } catch (error) {
+        console.error('Error fetching markdown file:', error);
+        return null;
     }
-];
+}
 
-// 渲染项目卡片
-function renderProjects(projectsToRender) {
-    projectGrid.innerHTML = '';
-    projectsToRender.forEach(project => {
-        const card = document.createElement('div');
-        card.className = 'project-card';
-        card.innerHTML = `
-            <h3>${project.title}</h3>
-            <p>${project.description}</p>
-            <a href="${project.link}" class="project-link">了解更多</a>
-        `;
-        projectGrid.appendChild(card);
+// Function to parse markdown frontmatter
+function parseFrontmatter(markdown) {
+    const match = markdown.match(/^---([\s\S]*?)---/);
+    if (!match) return { content: markdown };
+
+    const frontmatter = {};
+    const content = markdown.replace(/^---([\s\S]*?)---/, '').trim();
+    
+    match[1].split('\n').forEach(line => {
+        const [key, ...value] = line.split(':');
+        if (key && value) {
+            frontmatter[key.trim()] = value.join(':').trim();
+        }
+    });
+
+    return { frontmatter, content };
+}
+
+// Function to create blog post card
+function createBlogPostCard(postData) {
+    const { frontmatter, content } = postData;
+    const card = document.createElement('div');
+    card.className = 'blog-card';
+    
+    card.innerHTML = `
+        <h3>${frontmatter.title}</h3>
+        <div class="blog-meta">
+            <span class="date">${frontmatter.date}</span>
+            <span class="tags">${frontmatter.tags}</span>
+        </div>
+        <div class="blog-preview">${marked.parse(content.split('\n').slice(0, 3).join('\n'))}</div>
+        <a href="#" class="read-more">Read More</a>
+    `;
+    
+    return card;
+}
+
+// Function to load blog posts
+async function loadBlogPosts() {
+    const post = await fetchMarkdownFile('first-post.md');
+    if (post) {
+        const postData = parseFrontmatter(post);
+        const card = createBlogPostCard(postData);
+        blogList.appendChild(card);
+    }
+}
+
+// Search functionality
+function performSearch(query) {
+    const blogCards = document.querySelectorAll('.blog-card');
+    query = query.toLowerCase();
+
+    blogCards.forEach(card => {
+        const text = card.textContent.toLowerCase();
+        card.style.display = text.includes(query) ? 'block' : 'none';
     });
 }
 
-// 搜索功能实现
-function searchProjects(query) {
-    const filteredProjects = projects.filter(project => 
-        project.title.toLowerCase().includes(query.toLowerCase()) ||
-        project.description.toLowerCase().includes(query.toLowerCase())
-    );
-    renderProjects(filteredProjects);
-}
-
-// 添加搜索事件监听器
+// Add search event listeners
 searchButton.addEventListener('click', () => {
-    searchProjects(searchInput.value);
+    performSearch(searchInput.value);
 });
 
 searchInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
-        searchProjects(searchInput.value);
+        performSearch(searchInput.value);
     }
 });
 
-// 初始化显示所有项目
-renderProjects(projects);
-
-// 平滑滚动
+// Smooth scrolling
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
         e.preventDefault();
@@ -93,4 +116,7 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             });
         }
     });
-}); 
+});
+
+// Load blog posts when the page loads
+loadBlogPosts(); 
