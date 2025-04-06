@@ -172,23 +172,29 @@ function filterBlogPosts() {
 async function loadBlogPosts() {
     console.log('Loading blog posts');
     try {
-        // Get all markdown files from the blogs directory
-        const response = await fetch('blogs/');
-        const text = await response.text();
-        const parser = new DOMParser();
-        const htmlDoc = parser.parseFromString(text, 'text/html');
-        const links = Array.from(htmlDoc.querySelectorAll('a'))
-            .map(a => a.href)
-            .filter(href => href.endsWith('.md'))
-            .map(href => href.split('/').pop());
+        // Instead of trying to list the directory, use a blog index file
+        const response = await fetch('blogs/index.json');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const blogIndex = await response.json();
+        console.log('Loaded blog index:', blogIndex);
         
-        console.log('Found markdown files:', links);
-        
-        for (const filename of links) {
-            console.log(`Processing ${filename}`);
-            const post = await fetchMarkdownFile(filename);
-            if (post) {
-                const postData = parseFrontmatter(post);
+        for (const post of blogIndex) {
+            console.log(`Processing ${post.filename}`);
+            const postContent = await fetchMarkdownFile(post.filename);
+            if (postContent) {
+                const postData = parseFrontmatter(postContent);
+                // Ensure frontmatter exists
+                postData.frontmatter = postData.frontmatter || {};
+                // Use metadata from index if not in frontmatter
+                if (!postData.frontmatter.title && post.title) {
+                    postData.frontmatter.title = post.title;
+                }
+                if (!postData.frontmatter.date && post.date) {
+                    postData.frontmatter.date = post.date;
+                }
+                
                 blogPosts.push(postData);
                 
                 const card = createBlogPostCard(postData);
