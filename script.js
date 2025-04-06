@@ -94,6 +94,9 @@ function displayFullArticle(postData) {
         </div>
     `;
     
+    // Show the article detail section
+    articleDetail.style.display = 'block';
+    
     // Scroll to article
     articleDetail.scrollIntoView({ behavior: 'smooth' });
 }
@@ -169,9 +172,19 @@ function filterBlogPosts() {
 async function loadBlogPosts() {
     console.log('Loading blog posts');
     try {
-        const posts = ['first-post.md']; // Add more posts here as they're created
+        // Get all markdown files from the blogs directory
+        const response = await fetch('blogs/');
+        const text = await response.text();
+        const parser = new DOMParser();
+        const htmlDoc = parser.parseFromString(text, 'text/html');
+        const links = Array.from(htmlDoc.querySelectorAll('a'))
+            .map(a => a.href)
+            .filter(href => href.endsWith('.md'))
+            .map(href => href.split('/').pop());
         
-        for (const filename of posts) {
+        console.log('Found markdown files:', links);
+        
+        for (const filename of links) {
             console.log(`Processing ${filename}`);
             const post = await fetchMarkdownFile(filename);
             if (post) {
@@ -188,6 +201,21 @@ async function loadBlogPosts() {
         console.log('Blog posts loaded successfully');
     } catch (error) {
         console.error('Error loading blog posts:', error);
+        // If there's an error, try to load the default post
+        try {
+            const post = await fetchMarkdownFile('first-post.md');
+            if (post) {
+                const postData = parseFrontmatter(post);
+                blogPosts.push(postData);
+                
+                const card = createBlogPostCard(postData);
+                if (card) {
+                    blogList.appendChild(card);
+                }
+            }
+        } catch (fallbackError) {
+            console.error('Error loading fallback post:', fallbackError);
+        }
     }
 }
 
