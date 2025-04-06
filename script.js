@@ -21,13 +21,10 @@ themeSwitch.addEventListener('click', () => {
 
 // Blog functionality
 const blogList = document.getElementById('blog-list');
-const tagFilters = document.getElementById('tag-filters');
-const clearFilters = document.getElementById('clear-filters');
 const searchInput = document.getElementById('search-input');
 const searchButton = document.getElementById('search-button');
+const articleDetail = document.getElementById('article-detail');
 
-let allTags = new Set();
-let activeTags = new Set();
 let blogPosts = [];
 
 // Function to fetch and parse markdown files
@@ -67,20 +64,38 @@ function parseFrontmatter(markdown) {
             }
         });
 
-        // Parse tags if they exist
-        if (frontmatter.tags) {
-            frontmatter.tags = frontmatter.tags
-                .replace(/[\[\]]/g, '')
-                .split(',')
-                .map(tag => tag.trim());
-        }
-
         console.log('Parsed frontmatter:', frontmatter);
         return { frontmatter, content };
     } catch (error) {
         console.error('Error parsing frontmatter:', error);
         return { content: markdown };
     }
+}
+
+// Function to display full article
+function displayFullArticle(postData) {
+    const { frontmatter, content } = postData;
+    let parsedContent;
+    try {
+        parsedContent = marked.parse(content);
+    } catch (error) {
+        console.error('Error parsing markdown content:', error);
+        parsedContent = content;
+    }
+    
+    articleDetail.innerHTML = `
+        <div class="article-content">
+            <h2>${frontmatter.title || 'Untitled Post'}</h2>
+            <div class="article-meta">
+                <span class="date">${frontmatter.date || 'No date'}</span>
+            </div>
+            <div class="article-body">${parsedContent}</div>
+            <a href="#blog" class="back-to-list">← Back to Blog List</a>
+        </div>
+    `;
+    
+    // Scroll to article
+    articleDetail.scrollIntoView({ behavior: 'smooth' });
 }
 
 // Function to create blog post card
@@ -91,12 +106,6 @@ function createBlogPostCard(postData) {
         const card = document.createElement('div');
         card.className = 'blog-card';
         
-        const tagButtons = frontmatter.tags
-            ? frontmatter.tags
-                .map(tag => `<button class="tag">${tag}</button>`)
-                .join('')
-            : '';
-        
         // Use marked.parse with error handling
         let parsedContent;
         try {
@@ -106,46 +115,36 @@ function createBlogPostCard(postData) {
             parsedContent = content.split('\n').slice(0, 3).join('\n');
         }
         
+        // Create a unique ID for the article based on the title
+        const articleId = frontmatter.title ? frontmatter.title.toLowerCase().replace(/\s+/g, '-') : 'untitled';
+        
         card.innerHTML = `
-            <h3>${frontmatter.title || 'Untitled Post'}</h3>
+            <h3><a href="#article-${articleId}" class="article-link">${frontmatter.title || 'Untitled Post'}</a></h3>
             <div class="blog-meta">
                 <span class="date">${frontmatter.date || 'No date'}</span>
-                <div class="tags">${tagButtons}</div>
             </div>
             <div class="blog-preview">${parsedContent}</div>
-            <a href="#" class="read-more">Read More</a>
+            <a href="#article-${articleId}" class="read-more">Read More</a>
         `;
+        
+        // Add click event listeners
+        const articleLink = card.querySelector('.article-link');
+        const readMoreLink = card.querySelector('.read-more');
+        
+        articleLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            displayFullArticle(postData);
+        });
+        
+        readMoreLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            displayFullArticle(postData);
+        });
         
         return card;
     } catch (error) {
         console.error('Error creating blog card:', error);
         return null;
-    }
-}
-
-// Function to update tag filters
-function updateTagFilters() {
-    console.log('Updating tag filters. All tags:', Array.from(allTags));
-    try {
-        tagFilters.innerHTML = Array.from(allTags)
-            .map(tag => `<button class="tag ${activeTags.has(tag) ? 'active' : ''}">${tag}</button>`)
-            .join('');
-        
-        // Add click event listeners to tags
-        tagFilters.querySelectorAll('.tag').forEach(tagButton => {
-            tagButton.addEventListener('click', () => {
-                const tag = tagButton.textContent;
-                if (activeTags.has(tag)) {
-                    activeTags.delete(tag);
-                } else {
-                    activeTags.add(tag);
-                }
-                filterBlogPosts();
-                updateTagFilters();
-            });
-        });
-    } catch (error) {
-        console.error('Error updating tag filters:', error);
     }
 }
 
@@ -158,14 +157,8 @@ function filterBlogPosts() {
         
         blogCards.forEach(card => {
             const text = card.textContent.toLowerCase();
-            const cardTags = Array.from(card.querySelectorAll('.tags .tag'))
-                .map(tag => tag.textContent);
-            
             const matchesSearch = text.includes(searchQuery);
-            const matchesTags = activeTags.size === 0 || 
-                cardTags.some(tag => activeTags.has(tag));
-            
-            card.style.display = matchesSearch && matchesTags ? 'block' : 'none';
+            card.style.display = matchesSearch ? 'block' : 'none';
         });
     } catch (error) {
         console.error('Error filtering blog posts:', error);
@@ -185,11 +178,6 @@ async function loadBlogPosts() {
                 const postData = parseFrontmatter(post);
                 blogPosts.push(postData);
                 
-                // Collect all unique tags
-                if (postData.frontmatter && postData.frontmatter.tags) {
-                    postData.frontmatter.tags.forEach(tag => allTags.add(tag));
-                }
-                
                 const card = createBlogPostCard(postData);
                 if (card) {
                     blogList.appendChild(card);
@@ -197,20 +185,11 @@ async function loadBlogPosts() {
             }
         }
         
-        updateTagFilters();
         console.log('Blog posts loaded successfully');
     } catch (error) {
         console.error('Error loading blog posts:', error);
     }
 }
-
-// Clear filters
-clearFilters.addEventListener('click', () => {
-    activeTags.clear();
-    searchInput.value = '';
-    filterBlogPosts();
-    updateTagFilters();
-});
 
 // Add search event listeners
 searchButton.addEventListener('click', () => {

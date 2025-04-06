@@ -7,10 +7,6 @@
     --shadow-color: rgba(0, 0, 0, 0.1);
     --blog-card-bg: #ffffff;
     --blog-meta-color: #666666;
-    --tag-bg: #e9ecef;
-    --tag-bg-active: #4a90e2;
-    --tag-text: #333333;
-    --tag-text-active: #ffffff;
 }
 
 [data-theme="dark"] {
@@ -22,10 +18,6 @@
     --shadow-color: rgba(0, 0, 0, 0.3);
     --blog-card-bg: #2d2d2d;
     --blog-meta-color: #aaaaaa;
-    --tag-bg: #404040;
-    --tag-bg-active: #64b5f6;
-    --tag-text: #ffffff;
-    --tag-text-active: #ffffff;
 }
 
 * {
@@ -211,98 +203,100 @@ footer {
     margin-top: 4rem;
 }
 
-/* Blog filters styles */
-.blog-filters {
+.article-detail {
+    margin-top: 2rem;
+    padding: 2rem;
+    background-color: var(--blog-card-bg);
+    border-radius: 10px;
+    box-shadow: 0 2px 5px var(--shadow-color);
+    display: none;
+}
+
+.article-detail.active {
+    display: block;
+}
+
+.article-content {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.article-content h2 {
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+    font-size: 2rem;
+}
+
+.article-meta {
+    font-size: 0.9rem;
+    color: var(--blog-meta-color);
     margin-bottom: 2rem;
 }
 
-.tag-filters {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
+.article-body {
+    line-height: 1.8;
+    margin-bottom: 2rem;
 }
 
-.tag {
-    background-color: var(--tag-bg);
-    color: var(--tag-text);
-    padding: 0.3rem 0.8rem;
-    border-radius: 15px;
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    border: none;
+.article-body p {
+    margin-bottom: 1.5rem;
 }
 
-.tag:hover {
-    background-color: var(--tag-bg-active);
-    color: var(--tag-text-active);
-}
-
-.tag.active {
-    background-color: var(--tag-bg-active);
-    color: var(--tag-text-active);
-}
-
-.clear-filters {
-    background: none;
-    border: 2px solid var(--primary-color);
+.article-body h1,
+.article-body h2,
+.article-body h3,
+.article-body h4,
+.article-body h5,
+.article-body h6 {
     color: var(--primary-color);
-    padding: 0.3rem 0.8rem;
-    border-radius: 15px;
-    cursor: pointer;
+    margin: 2rem 0 1rem;
+}
+
+.article-body code {
+    background-color: var(--shadow-color);
+    padding: 0.2rem 0.4rem;
+    border-radius: 3px;
+    font-family: monospace;
+}
+
+.article-body pre {
+    background-color: var(--shadow-color);
+    padding: 1rem;
+    border-radius: 5px;
+    overflow-x: auto;
+    margin: 1.5rem 0;
+}
+
+.article-body pre code {
+    background-color: transparent;
+    padding: 0;
+}
+
+.back-to-list {
+    display: inline-block;
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: bold;
+    margin-top: 2rem;
+    padding: 0.5rem 1rem;
+    border: 2px solid var(--primary-color);
+    border-radius: 25px;
     transition: all 0.3s ease;
 }
 
-.clear-filters:hover {
+.back-to-list:hover {
     background-color: var(--primary-color);
     color: white;
 }
 
-.blog-card {
-    background-color: var(--blog-card-bg);
-    border-radius: 10px;
-    padding: 1.5rem;
-    box-shadow: 0 2px 5px var(--shadow-color);
-    transition: transform 0.3s;
-}
-
-.blog-card:hover {
-    transform: translateY(-5px);
-}
-
-.blog-card h3 {
+.article-link {
     color: var(--primary-color);
-    margin-bottom: 1rem;
-    font-size: 1.4rem;
+    text-decoration: none;
+    transition: color 0.3s ease;
 }
 
-.blog-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    font-size: 0.9rem;
-    color: var(--blog-meta-color);
-    margin-bottom: 1rem;
-}
-
-.blog-meta .date {
-    margin-right: 1rem;
-}
-
-.blog-meta .tags {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.blog-meta .tag {
-    font-size: 0.8rem;
-    padding: 0.2rem 0.6rem;
-}
-
-.blog-preview {
-    margin-bottom: 1rem;
-    line-height: 1.6;
+.article-link:hover {
+    color: #357abd;
 }
 
 /* Responsive adjustments */
@@ -323,12 +317,11 @@ footer {
         grid-template-columns: 1fr;
     }
     
-    .tag-filters {
-        justify-content: center;
+    .article-content {
+        padding: 0 1rem;
     }
     
-    .clear-filters {
-        width: 100%;
-        margin-top: 1rem;
+    .article-content h2 {
+        font-size: 1.5rem;
     }
 } 
