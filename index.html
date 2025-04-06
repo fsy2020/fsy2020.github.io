@@ -1,76 +1,154 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panzi's Personal Website</title>
-    <link rel="stylesheet" href="styles.css">
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
-    <link rel="shortcut icon" href="favicon.ico">
-    <!-- Marked.js for Markdown parsing -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <!-- Debug info -->
-    <script>
-        window.onerror = function(msg, url, lineNo, columnNo, error) {
-            console.error('Error: ' + msg + '\nURL: ' + url + '\nLine: ' + lineNo + '\nColumn: ' + columnNo + '\nError object: ' + JSON.stringify(error));
-            return false;
-        };
-    </script>
+    <title>我的博客</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+            background-color: #f8f9fa;
+        }
+        
+        header {
+            text-align: center;
+            padding: 30px 0;
+            margin-bottom: 40px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        header h1 {
+            margin: 0;
+            color: #2c3e50;
+            font-size: 2.5em;
+        }
+        
+        .blog-container {
+            margin-top: 20px;
+        }
+        
+        #loading {
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+            color: #666;
+        }
+        
+        .blog-post {
+            margin-bottom: 50px;
+            padding: 30px;
+            border-radius: 8px;
+            background-color: #fff;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s;
+        }
+        
+        .blog-post:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .blog-title {
+            font-size: 28px;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        .blog-date {
+            color: #7f8c8d;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+        }
+        
+        .blog-content {
+            margin-top: 20px;
+            line-height: 1.8;
+        }
+        
+        .blog-content h1 {
+            font-size: 26px;
+            color: #2c3e50;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+        
+        .blog-content h2 {
+            font-size: 22px;
+            color: #34495e;
+            margin-top: 25px;
+            margin-bottom: 15px;
+        }
+        
+        .blog-content h3 {
+            font-size: 18px;
+            color: #34495e;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .blog-content p {
+            margin-bottom: 15px;
+        }
+        
+        .blog-tags {
+            margin-top: 25px;
+            font-style: italic;
+            color: #7f8c8d;
+            font-size: 0.9em;
+            border-top: 1px solid #f0f0f0;
+            padding-top: 15px;
+        }
+        
+        pre, code {
+            background-color: #f5f7f9;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        pre {
+            padding: 15px;
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+        
+        code {
+            padding: 2px 5px;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+            
+            .blog-post {
+                padding: 20px;
+            }
+            
+            header {
+                padding: 20px 0;
+            }
+            
+            .blog-title {
+                font-size: 24px;
+            }
+        }
+    </style>
 </head>
 <body>
     <header>
-        <nav>
-            <div class="logo">Panzi</div>
-            <div class="nav-links">
-                <a href="#home">Home</a>
-                <a href="#blog">Blog</a>
-                <a href="#about">About</a>
-                <a href="#contact">Contact</a>
-            </div>
-            <div class="theme-toggle">
-                <button id="theme-switch">🌙</button>
-            </div>
-        </nav>
+        <h1>我的博客</h1>
+        <p>分享我的日本生活和技术见解</p>
     </header>
-
-    <main>
-        <section id="home" class="hero">
-            <h1>Welcome to Panzi's Website</h1>
-            <div class="search-container">
-                <input type="text" id="search-input" placeholder="Search blogs...">
-                <button id="search-button">Search</button>
-            </div>
-        </section>
-
-        <section id="blog" class="blog">
-            <h2>Blog Posts</h2>
-            <div id="blog-list" class="blog-grid">
-                <!-- Blog posts will be dynamically loaded here -->
-            </div>
-            <div id="article-detail" class="article-detail">
-                <!-- Full article content will be loaded here -->
-            </div>
-        </section>
-
-        <section id="about" class="about">
-            <h2>About Me</h2>
-            <p>Welcome to my personal space where I share my thoughts and experiences...</p>
-        </section>
-
-        <section id="contact" class="contact">
-            <h2>Contact</h2>
-            <div class="contact-info">
-                <p>Email: fsy781653822@gmail.com</p>
-                <p>GitHub: <a href="https://github.com/fsy2020">fsy2020</a></p>
-            </div>
-        </section>
-    </main>
-
-    <footer>
-        <p>&copy; 2025 Panzi. All rights reserved.</p>
-    </footer>
+    
+    <div class="blog-container" id="blogContainer">
+        <!-- 博客内容将在这里显示 -->
+        <div id="loading">正在加载博客内容...</div>
+    </div>
 
     <script src="script.js"></script>
 </body>
