@@ -75,12 +75,16 @@ let currentSection = 'home';
 function getBaseUrl() {
     // Get the current URL's path
     const path = window.location.pathname;
+    console.log('Current pathname:', path);
+    
     // If it's a GitHub Pages URL (contains the repo name as a path segment)
     if (path.includes('/fsy2020.github.io/')) {
+        console.log('Running on GitHub Pages, using /fsy2020.github.io as base URL');
         // Return the root of the repo
         return '/fsy2020.github.io';
     }
     // Otherwise, return an empty string for local development
+    console.log('Running in local development mode, using empty base URL');
     return '';
 }
 
@@ -290,14 +294,22 @@ function createContentCard(postData, type) {
 
 // Function to load blog posts
 async function loadBlogs() {
-    if (blogsLoaded) return;
+    console.log('Starting blog loading process');
+    if (blogsLoaded) {
+        console.log('Blogs already loaded, skipping');
+        return;
+    }
     
     const blogContainer = document.getElementById('blog-list');
-    if (!blogContainer) return;
+    if (!blogContainer) {
+        console.error('blog-list container not found!');
+        return;
+    }
     
     try {
         blogContainer.innerHTML = '<div class="loading">Loading blogs...</div>';
         
+        console.log(`Fetching blogs from: ${baseUrl}/_posts/blogs/index.json`);
         const response = await fetch(`${baseUrl}/_posts/blogs/index.json`);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -328,7 +340,12 @@ async function loadBlogs() {
                 const card = createContentCard(postData, 'blog');
                 if (card) {
                     blogContainer.appendChild(card);
+                    console.log('Blog card added to container');
+                } else {
+                    console.error('Failed to create blog card');
                 }
+            } else {
+                console.error(`Failed to fetch content for blog: ${post.filename}`);
             }
         }
         
@@ -446,7 +463,11 @@ async function loadWork() {
 
 // Navigation functionality
 function setActiveSection(sectionId) {
-    if (currentSection === sectionId) return;
+    console.log(`Setting active section: ${sectionId}`);
+    if (currentSection === sectionId) {
+        console.log('Section already active, skipping');
+        return;
+    }
     
     // Update active navigation link
     navLinks.forEach(link => {
@@ -471,18 +492,42 @@ function setActiveSection(sectionId) {
     dynamicContent.innerHTML = '';
     
     // Add new content based on section
-    dynamicContent.innerHTML = contentTemplates[sectionId] || '';
+    const template = contentTemplates[sectionId];
+    console.log(`Template for ${sectionId}:`, template ? 'Found' : 'Not found');
+    
+    if (!template) {
+        console.error(`No template found for section: ${sectionId}`);
+        dynamicContent.innerHTML = `<div class="error">Error: Could not load ${sectionId} content.</div>`;
+        return;
+    }
+    
+    dynamicContent.innerHTML = template;
     
     // Load content if needed
     if (sectionId === 'blog') {
         blogList = document.getElementById('blog-list');
-        loadBlogs();
+        console.log('Blog list element:', blogList ? 'Found' : 'Not found');
+        if (!blogList) {
+            console.error('Could not find blog-list element after setting template');
+        } else {
+            loadBlogs();
+        }
     } else if (sectionId === 'projects') {
         projectList = document.getElementById('project-list');
-        loadProjects();
+        console.log('Project list element:', projectList ? 'Found' : 'Not found');
+        if (!projectList) {
+            console.error('Could not find project-list element after setting template');
+        } else {
+            loadProjects();
+        }
     } else if (sectionId === 'work') {
         workList = document.getElementById('work-list');
-        loadWork();
+        console.log('Work list element:', workList ? 'Found' : 'Not found');
+        if (!workList) {
+            console.error('Could not find work-list element after setting template');
+        } else {
+            loadWork();
+        }
     }
     
     // Update current section
@@ -523,5 +568,48 @@ function initNavigation() {
 // Initialize when DOM is fully loaded
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM loaded, initializing content functionality');
+    
+    // Debug info about environment
+    console.log('Running in browser:', navigator.userAgent);
+    console.log('Current URL:', window.location.href);
+    console.log('Current pathname:', window.location.pathname);
+    console.log('Base URL used:', baseUrl);
+    
+    // Try to directly fetch Markdown contents to verify file access
+    testFetchFiles();
+    
     initNavigation();
-}); 
+});
+
+// Test function to directly fetch files
+async function testFetchFiles() {
+    console.log('Testing direct file access...');
+    
+    try {
+        // Test blogs index
+        const blogResponse = await fetch(`${baseUrl}/_posts/blogs/index.json`);
+        console.log('Blogs index fetch status:', blogResponse.status);
+        if (blogResponse.ok) {
+            const blogData = await blogResponse.json();
+            console.log('Blog index content:', blogData);
+        }
+        
+        // Test projects index
+        const projectsResponse = await fetch(`${baseUrl}/_posts/projects/index.json`);
+        console.log('Projects index fetch status:', projectsResponse.status);
+        if (projectsResponse.ok) {
+            const projectsData = await projectsResponse.json();
+            console.log('Projects index content:', projectsData);
+        }
+        
+        // Test work index
+        const workResponse = await fetch(`${baseUrl}/_posts/work/index.json`);
+        console.log('Work index fetch status:', workResponse.status);
+        if (workResponse.ok) {
+            const workData = await workResponse.json();
+            console.log('Work index content:', workData);
+        }
+    } catch (error) {
+        console.error('File access test failed:', error);
+    }
+} 
