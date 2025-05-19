@@ -78,9 +78,8 @@ function getBaseUrl() {
     console.log('Current pathname:', path);
     
     // If it's a GitHub Pages URL (contains the repo name as a path segment)
-    if (path.includes('/fsy2020.github.io/')) {
+    if (path.includes('/fsy2020.github.io')) {
         console.log('Running on GitHub Pages, using /fsy2020.github.io as base URL');
-        // Return the root of the repo
         return '/fsy2020.github.io';
     }
     // Otherwise, return an empty string for local development
