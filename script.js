@@ -27,11 +27,26 @@ const articleDetail = document.getElementById('article-detail');
 
 let blogPosts = [];
 
+// Get the base URL for assets, adjusting for GitHub Pages if necessary
+function getBaseUrl() {
+    // Get the current URL's path
+    const path = window.location.pathname;
+    // If it's a GitHub Pages URL (contains the repo name as a path segment)
+    if (path.includes('/fsy2020.github.io/')) {
+        // Return the root of the repo
+        return '/fsy2020.github.io';
+    }
+    // Otherwise, return an empty string for local development
+    return '';
+}
+
+const baseUrl = getBaseUrl();
+
 // Function to fetch and parse markdown files
 async function fetchMarkdownFile(filename) {
     console.log(`Fetching markdown file: ${filename}`);
     try {
-        const response = await fetch(`blogs/${filename}`);
+        const response = await fetch(`${baseUrl}/blogs/${filename}`);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -122,27 +137,15 @@ function createBlogPostCard(postData) {
         const articleId = frontmatter.title ? frontmatter.title.toLowerCase().replace(/\s+/g, '-') : 'untitled';
         
         card.innerHTML = `
-            <h3><a href="#article-${articleId}" class="article-link">${frontmatter.title || 'Untitled Post'}</a></h3>
+            <h3><a href="post.html?id=${articleId}" class="article-link">${frontmatter.title || 'Untitled Post'}</a></h3>
             <div class="blog-meta">
                 <span class="date">${frontmatter.date || 'No date'}</span>
             </div>
             <div class="blog-preview">${parsedContent}</div>
-            <a href="#article-${articleId}" class="read-more">Read More</a>
+            <a href="post.html?id=${articleId}" class="read-more">Read More</a>
         `;
         
-        // Add click event listeners
-        const articleLink = card.querySelector('.article-link');
-        const readMoreLink = card.querySelector('.read-more');
-        
-        articleLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            displayFullArticle(postData);
-        });
-        
-        readMoreLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            displayFullArticle(postData);
-        });
+        // No need for click event listeners as the links now navigate to a new page
         
         return card;
     } catch (error) {
@@ -173,7 +176,7 @@ async function loadBlogPosts() {
     console.log('Loading blog posts');
     try {
         // Instead of trying to list the directory, use a blog index file
-        const response = await fetch('blogs/index.json');
+        const response = await fetch(`${baseUrl}/blogs/index.json`);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
