@@ -1,6 +1,37 @@
 // Dark mode toggle
 const themeSwitch = document.getElementById('theme-switch');
 const body = document.body;
+const navLinks = document.querySelectorAll('.nav-link');
+const homeSection = document.getElementById('home');
+const dynamicContent = document.getElementById('dynamic-content');
+
+// Content templates
+const contentTemplates = {
+    blog: `
+        <section id="blog" class="content-section">
+            <h2>Blog Posts</h2>
+            <div id="blog-list" class="content-grid">
+                <!-- Blog posts will be dynamically loaded here -->
+            </div>
+        </section>
+    `,
+    projects: `
+        <section id="projects" class="content-section">
+            <h2>Projects</h2>
+            <div id="project-list" class="content-grid">
+                <!-- Projects will be dynamically loaded here -->
+            </div>
+        </section>
+    `,
+    about: `
+        <section id="about" class="content-section">
+            <h2>About Me</h2>
+            <div class="about-content">
+                <p>Welcome to my personal space where I share my thoughts and experiences...</p>
+            </div>
+        </section>
+    `
+};
 
 // Check theme settings in local storage
 const savedTheme = localStorage.getItem('theme');
@@ -19,13 +50,15 @@ themeSwitch.addEventListener('click', () => {
     localStorage.setItem('theme', newTheme);
 });
 
-// Blog functionality
-const blogList = document.getElementById('blog-list');
-const searchInput = document.getElementById('search-input');
-const searchButton = document.getElementById('search-button');
-const articleDetail = document.getElementById('article-detail');
+// Content functionality
+let blogList;
+let projectList;
 
 let blogPosts = [];
+let projects = [];
+let blogsLoaded = false;
+let projectsLoaded = false;
+let currentSection = 'home';
 
 // Get the base URL for assets, adjusting for GitHub Pages if necessary
 function getBaseUrl() {
@@ -43,10 +76,10 @@ function getBaseUrl() {
 const baseUrl = getBaseUrl();
 
 // Function to fetch and parse markdown files
-async function fetchMarkdownFile(filename) {
-    console.log(`Fetching markdown file: ${filename}`);
+async function fetchMarkdownFile(directory, filename) {
+    console.log(`Fetching markdown file: ${directory}/${filename}`);
     try {
-        const response = await fetch(`${baseUrl}/blogs/${filename}`);
+        const response = await fetch(`${baseUrl}/_posts/${directory}/${filename}`);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -54,7 +87,7 @@ async function fetchMarkdownFile(filename) {
         console.log(`Successfully fetched ${filename}`);
         return text;
     } catch (error) {
-        console.error('Error fetching markdown file:', error);
+        console.error(`Error fetching markdown file: ${error}`);
         return null;
     }
 }
@@ -87,42 +120,13 @@ function parseFrontmatter(markdown) {
     }
 }
 
-// Function to display full article
-function displayFullArticle(postData) {
-    const { frontmatter, content } = postData;
-    let parsedContent;
-    try {
-        parsedContent = marked.parse(content);
-    } catch (error) {
-        console.error('Error parsing markdown content:', error);
-        parsedContent = content;
-    }
-    
-    articleDetail.innerHTML = `
-        <div class="article-content">
-            <h2>${frontmatter.title || 'Untitled Post'}</h2>
-            <div class="article-meta">
-                <span class="date">${frontmatter.date || 'No date'}</span>
-            </div>
-            <div class="article-body">${parsedContent}</div>
-            <a href="#blog" class="back-to-list">← Back to Blog List</a>
-        </div>
-    `;
-    
-    // Show the article detail section
-    articleDetail.style.display = 'block';
-    
-    // Scroll to article
-    articleDetail.scrollIntoView({ behavior: 'smooth' });
-}
-
-// Function to create blog post card
-function createBlogPostCard(postData) {
-    console.log('Creating blog post card:', postData);
+// Function to display content cards
+function createContentCard(postData, type) {
+    console.log(`Creating ${type} card:`, postData);
     try {
         const { frontmatter, content } = postData;
         const card = document.createElement('div');
-        card.className = 'blog-card';
+        card.className = `${type}-card`;
         
         // Use marked.parse with error handling
         let parsedContent;
@@ -133,59 +137,169 @@ function createBlogPostCard(postData) {
             parsedContent = content.split('\n').slice(0, 3).join('\n');
         }
         
-        // Create a unique ID for the article based on the title
-        const articleId = frontmatter.title ? frontmatter.title.toLowerCase().replace(/\s+/g, '-') : 'untitled';
-        
         card.innerHTML = `
-            <h3><a href="post.html?id=${articleId}" class="article-link">${frontmatter.title || 'Untitled Post'}</a></h3>
-            <div class="blog-meta">
+            <h3>${frontmatter.title || 'Untitled'}</h3>
+            <div class="${type}-meta">
                 <span class="date">${frontmatter.date || 'No date'}</span>
             </div>
-            <div class="blog-preview">${parsedContent}</div>
-            <a href="post.html?id=${articleId}" class="read-more">Read More</a>
+            <div class="${type}-preview">${parsedContent}</div>
+            <a href="#" class="read-more">Read Full ${type === 'blog' ? 'Post' : 'Project'}</a>
         `;
         
-        // No need for click event listeners as the links now navigate to a new page
+        // Add click event for the read more button
+        const readMoreLink = card.querySelector('.read-more');
+        readMoreLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            
+            // Create modal for displaying full content
+            const modal = document.createElement('div');
+            modal.className = 'content-modal';
+            
+            // Parse the full markdown content
+            let fullContent;
+            try {
+                fullContent = marked.parse(content);
+            } catch (error) {
+                console.error('Error parsing markdown content:', error);
+                fullContent = content;
+            }
+            
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <span class="close-modal">&times;</span>
+                    <h2>${frontmatter.title || 'Untitled'}</h2>
+                    <div class="modal-meta">
+                        <span class="date">${frontmatter.date || 'No date'}</span>
+                    </div>
+                    <div class="modal-body">${fullContent}</div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Add close button functionality
+            const closeButton = modal.querySelector('.close-modal');
+            closeButton.addEventListener('click', () => {
+                document.body.removeChild(modal);
+                document.body.classList.remove('modal-open');
+            });
+            
+            // Close when clicking outside the modal content
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    document.body.removeChild(modal);
+                    document.body.classList.remove('modal-open');
+                }
+            });
+            
+            // Add modal styles dynamically
+            if (!document.getElementById('modal-styles')) {
+                const style = document.createElement('style');
+                style.id = 'modal-styles';
+                style.textContent = `
+                    .content-modal {
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background-color: rgba(0, 0, 0, 0.7);
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        z-index: 1001;
+                        overflow-y: auto;
+                        padding: 20px;
+                    }
+                    .modal-content {
+                        background-color: var(--blog-card-bg);
+                        border-radius: var(--border-radius);
+                        padding: 2rem;
+                        width: 90%;
+                        max-width: 800px;
+                        max-height: 90vh;
+                        overflow-y: auto;
+                        position: relative;
+                        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+                    }
+                    .close-modal {
+                        position: absolute;
+                        top: 15px;
+                        right: 15px;
+                        font-size: 1.5rem;
+                        cursor: pointer;
+                        color: var(--blog-meta-color);
+                    }
+                    .close-modal:hover {
+                        color: var(--primary-color);
+                    }
+                    .modal-meta {
+                        font-size: 0.9rem;
+                        color: var(--blog-meta-color);
+                        margin-bottom: 1.5rem;
+                    }
+                    .modal-body {
+                        line-height: 1.8;
+                    }
+                    .modal-body h1, .modal-body h2, .modal-body h3 {
+                        color: var(--primary-color);
+                        margin: 1.5rem 0 1rem;
+                    }
+                    .modal-body p {
+                        margin-bottom: 1rem;
+                    }
+                    .modal-body pre {
+                        background-color: var(--shadow-color);
+                        padding: 1rem;
+                        border-radius: 5px;
+                        overflow-x: auto;
+                        margin: 1rem 0;
+                    }
+                    .modal-body code {
+                        font-family: monospace;
+                    }
+                    /* Prevent body scroll when modal is open */
+                    body.modal-open {
+                        overflow: hidden;
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            // Prevent background scrolling
+            document.body.classList.add('modal-open');
+        });
         
         return card;
     } catch (error) {
-        console.error('Error creating blog card:', error);
+        console.error(`Error creating ${type} card:`, error);
         return null;
     }
 }
 
-// Function to filter blog posts
-function filterBlogPosts() {
-    console.log('Filtering blog posts');
-    try {
-        const searchQuery = searchInput.value.toLowerCase();
-        const blogCards = document.querySelectorAll('.blog-card');
-        
-        blogCards.forEach(card => {
-            const text = card.textContent.toLowerCase();
-            const matchesSearch = text.includes(searchQuery);
-            card.style.display = matchesSearch ? 'block' : 'none';
-        });
-    } catch (error) {
-        console.error('Error filtering blog posts:', error);
-    }
-}
-
 // Function to load blog posts
-async function loadBlogPosts() {
-    console.log('Loading blog posts');
+async function loadBlogs() {
+    if (blogsLoaded) return;
+    
+    const blogContainer = document.getElementById('blog-list');
+    if (!blogContainer) return;
+    
     try {
-        // Instead of trying to list the directory, use a blog index file
-        const response = await fetch(`${baseUrl}/blogs/index.json`);
+        blogContainer.innerHTML = '<div class="loading">Loading blogs...</div>';
+        
+        const response = await fetch(`${baseUrl}/_posts/blogs/index.json`);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const blogIndex = await response.json();
         console.log('Loaded blog index:', blogIndex);
         
+        // Clear loading message
+        blogContainer.innerHTML = '';
+        
         for (const post of blogIndex) {
-            console.log(`Processing ${post.filename}`);
-            const postContent = await fetchMarkdownFile(post.filename);
+            console.log(`Processing blog: ${post.filename}`);
+            const postContent = await fetchMarkdownFile('blogs', post.filename);
             if (postContent) {
                 const postData = parseFrontmatter(postContent);
                 // Ensure frontmatter exists
@@ -200,60 +314,148 @@ async function loadBlogPosts() {
                 
                 blogPosts.push(postData);
                 
-                const card = createBlogPostCard(postData);
+                const card = createContentCard(postData, 'blog');
                 if (card) {
-                    blogList.appendChild(card);
+                    blogContainer.appendChild(card);
                 }
             }
         }
         
         console.log('Blog posts loaded successfully');
+        blogsLoaded = true;
     } catch (error) {
-        console.error('Error loading blog posts:', error);
-        // If there's an error, try to load the default post
-        try {
-            const post = await fetchMarkdownFile('first-post.md');
-            if (post) {
-                const postData = parseFrontmatter(post);
-                blogPosts.push(postData);
-                
-                const card = createBlogPostCard(postData);
-                if (card) {
-                    blogList.appendChild(card);
-                }
-            }
-        } catch (fallbackError) {
-            console.error('Error loading fallback post:', fallbackError);
-        }
+        console.error('Error loading blogs:', error);
+        blogContainer.innerHTML = '<p>Failed to load blog posts. Please try again later.</p>';
     }
 }
 
-// Add search event listeners
-searchButton.addEventListener('click', () => {
-    filterBlogPosts();
-});
-
-searchInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-        filterBlogPosts();
+// Function to load projects
+async function loadProjects() {
+    if (projectsLoaded) return;
+    
+    const projectContainer = document.getElementById('project-list');
+    if (!projectContainer) return;
+    
+    try {
+        projectContainer.innerHTML = '<div class="loading">Loading projects...</div>';
+        
+        const response = await fetch(`${baseUrl}/_posts/projects/index.json`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const projectIndex = await response.json();
+        console.log('Loaded project index:', projectIndex);
+        
+        // Clear loading message
+        projectContainer.innerHTML = '';
+        
+        for (const project of projectIndex) {
+            console.log(`Processing project: ${project.filename}`);
+            const projectContent = await fetchMarkdownFile('projects', project.filename);
+            if (projectContent) {
+                const projectData = parseFrontmatter(projectContent);
+                // Ensure frontmatter exists
+                projectData.frontmatter = projectData.frontmatter || {};
+                // Use metadata from index if not in frontmatter
+                if (!projectData.frontmatter.title && project.title) {
+                    projectData.frontmatter.title = project.title;
+                }
+                if (!projectData.frontmatter.date && project.date) {
+                    projectData.frontmatter.date = project.date;
+                }
+                
+                projects.push(projectData);
+                
+                const card = createContentCard(projectData, 'project');
+                if (card) {
+                    projectContainer.appendChild(card);
+                }
+            }
+        }
+        
+        console.log('Projects loaded successfully');
+        projectsLoaded = true;
+    } catch (error) {
+        console.error('Error loading projects:', error);
+        projectContainer.innerHTML = '<p>Failed to load projects. Please try again later.</p>';
     }
-});
+}
 
-// Smooth scrolling
-document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function (e) {
-        e.preventDefault();
-        const target = document.querySelector(this.getAttribute('href'));
-        if (target) {
-            target.scrollIntoView({
-                behavior: 'smooth'
-            });
+// Navigation functionality
+function setActiveSection(sectionId) {
+    if (currentSection === sectionId) return;
+    
+    // Update active navigation link
+    navLinks.forEach(link => {
+        if (link.getAttribute('data-section') === sectionId) {
+            link.classList.add('active');
+        } else {
+            link.classList.remove('active');
         }
     });
-});
+    
+    // Handle home section separately
+    if (sectionId === 'home') {
+        homeSection.classList.add('active');
+        dynamicContent.innerHTML = '';
+        currentSection = 'home';
+        return;
+    } else {
+        homeSection.classList.remove('active');
+    }
+    
+    // Clear current content
+    dynamicContent.innerHTML = '';
+    
+    // Add new content based on section
+    dynamicContent.innerHTML = contentTemplates[sectionId] || '';
+    
+    // Load content if needed
+    if (sectionId === 'blog') {
+        blogList = document.getElementById('blog-list');
+        loadBlogs();
+    } else if (sectionId === 'projects') {
+        projectList = document.getElementById('project-list');
+        loadProjects();
+    }
+    
+    // Update current section
+    currentSection = sectionId;
+    
+    // Update URL hash
+    window.location.hash = sectionId;
+    
+    // Scroll to top of dynamic content
+    dynamicContent.scrollIntoView({ behavior: 'smooth' });
+}
+
+// Initialize navigation
+function initNavigation() {
+    // Add click event to navigation links
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const section = link.getAttribute('data-section');
+            setActiveSection(section);
+        });
+    });
+    
+    // Check URL hash on load
+    let initialSection = 'home';
+    if (window.location.hash) {
+        const hashSection = window.location.hash.substring(1);
+        // Verify the section exists in our templates
+        if (hashSection === 'home' || contentTemplates[hashSection]) {
+            initialSection = hashSection;
+        }
+    }
+    
+    // Set initial active section
+    setActiveSection(initialSection);
+}
 
 // Initialize when DOM is fully loaded
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM loaded, initializing blog functionality');
-    loadBlogPosts();
+    console.log('DOM loaded, initializing content functionality');
+    initNavigation();
 }); 
