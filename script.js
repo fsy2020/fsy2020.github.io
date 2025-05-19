@@ -23,6 +23,14 @@ const contentTemplates = {
             </div>
         </section>
     `,
+    work: `
+        <section id="work" class="content-section">
+            <h2>Work Experience</h2>
+            <div id="work-list" class="content-grid">
+                <!-- Work experience will be dynamically loaded here -->
+            </div>
+        </section>
+    `,
     about: `
         <section id="about" class="content-section">
             <h2>About Me</h2>
@@ -53,11 +61,14 @@ themeSwitch.addEventListener('click', () => {
 // Content functionality
 let blogList;
 let projectList;
+let workList;
 
 let blogPosts = [];
 let projects = [];
+let workEntries = [];
 let blogsLoaded = false;
 let projectsLoaded = false;
+let workLoaded = false;
 let currentSection = 'home';
 
 // Get the base URL for assets, adjusting for GitHub Pages if necessary
@@ -381,6 +392,58 @@ async function loadProjects() {
     }
 }
 
+// Function to load work experience
+async function loadWork() {
+    if (workLoaded) return;
+    
+    const workContainer = document.getElementById('work-list');
+    if (!workContainer) return;
+    
+    try {
+        workContainer.innerHTML = '<div class="loading">Loading work experience...</div>';
+        
+        const response = await fetch(`${baseUrl}/_posts/work/index.json`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const workIndex = await response.json();
+        console.log('Loaded work index:', workIndex);
+        
+        // Clear loading message
+        workContainer.innerHTML = '';
+        
+        for (const entry of workIndex) {
+            console.log(`Processing work entry: ${entry.filename}`);
+            const workContent = await fetchMarkdownFile('work', entry.filename);
+            if (workContent) {
+                const workData = parseFrontmatter(workContent);
+                // Ensure frontmatter exists
+                workData.frontmatter = workData.frontmatter || {};
+                // Use metadata from index if not in frontmatter
+                if (!workData.frontmatter.title && entry.title) {
+                    workData.frontmatter.title = entry.title;
+                }
+                if (!workData.frontmatter.date && entry.date) {
+                    workData.frontmatter.date = entry.date;
+                }
+                
+                workEntries.push(workData);
+                
+                const card = createContentCard(workData, 'project');  // Reuse project card style
+                if (card) {
+                    workContainer.appendChild(card);
+                }
+            }
+        }
+        
+        console.log('Work entries loaded successfully');
+        workLoaded = true;
+    } catch (error) {
+        console.error('Error loading work experience:', error);
+        workContainer.innerHTML = '<p>Failed to load work experience. Please try again later.</p>';
+    }
+}
+
 // Navigation functionality
 function setActiveSection(sectionId) {
     if (currentSection === sectionId) return;
@@ -417,6 +480,9 @@ function setActiveSection(sectionId) {
     } else if (sectionId === 'projects') {
         projectList = document.getElementById('project-list');
         loadProjects();
+    } else if (sectionId === 'work') {
+        workList = document.getElementById('work-list');
+        loadWork();
     }
     
     // Update current section
