@@ -316,4 +316,77 @@ footer {
         height: auto;
         padding: 3rem 0;
     }
+}
+
+/* Error and loading indicators */
+.error {
+    color: #e63946;
+    background-color: rgba(230, 57, 70, 0.1);
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    border-left: 4px solid #e63946;
+    margin-bottom: 1rem;
+}
+
+.error button {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0.3rem 0.7rem;
+    border-radius: 4px;
+    margin-left: 1rem;
+    cursor: pointer;
+}
+
+.loading {
+    text-align: center;
+    padding: 2rem;
+    color: var(--blog-meta-color);
+}
+
+.error-card {
+    border-left: 4px solid #e63946 !important;
+}
+
+.info {
+    color: var(--primary-color);
+    background-color: rgba(58, 134, 255, 0.1);
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    border-left: 4px solid var(--primary-color);
+    margin-bottom: 1rem;
+}
+
+/* Diagnostic information */
+.diagnostic-info {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    background-color: var(--blog-card-bg);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    max-width: 400px;
+    box-shadow: 0 2px 10px var(--shadow-color);
+    font-size: 0.8rem;
+    z-index: 2000;
+}
+
+.diagnostic-info h3 {
+    margin-bottom: 0.5rem;
+    color: var(--primary-color);
+}
+
+.diagnostic-info p {
+    margin-bottom: 0.3rem;
+    word-break: break-all;
+}
+
+.diagnostic-info button {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0.3rem 0.7rem;
+    border-radius: 4px;
+    margin-top: 0.5rem;
+    cursor: pointer;
 } 
