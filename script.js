@@ -91,17 +91,19 @@ const baseUrl = getBaseUrl();
 
 // Function to fetch and parse markdown files
 async function fetchMarkdownFile(directory, filename) {
-    console.log(`Fetching markdown file: ${directory}/${filename}`);
+    const filePath = `${baseUrl}/_posts/${directory}/${filename}`;
+    console.log(`Fetching markdown file: ${filePath}`);
     try {
-        const response = await fetch(`${baseUrl}/_posts/${directory}/${filename}`);
+        const response = await fetch(filePath);
         if (!response.ok) {
+            console.error(`HTTP error when fetching ${filePath}! status: ${response.status}`);
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const text = await response.text();
         console.log(`Successfully fetched ${filename}`);
         return text;
     } catch (error) {
-        console.error(`Error fetching markdown file: ${error}`);
+        console.error(`Error fetching markdown file from ${filePath}: ${error}`);
         return null;
     }
 }
@@ -308,16 +310,30 @@ async function loadBlogs() {
     try {
         blogContainer.innerHTML = '<div class="loading">Loading blogs...</div>';
         
-        console.log(`Fetching blogs from: ${baseUrl}/_posts/blogs/index.json`);
-        const response = await fetch(`${baseUrl}/_posts/blogs/index.json`);
+        const indexPath = `${baseUrl}/_posts/blogs/index.json`;
+        console.log(`Fetching blogs from: ${indexPath}`);
+        const response = await fetch(indexPath);
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            console.error(`HTTP error when fetching blog index! Status: ${response.status}`);
+            blogContainer.innerHTML = `<div class="error">Error loading blog index (${response.status}). <button id="retry-blogs">Retry</button></div>`;
+            
+            // Add retry button functionality
+            document.getElementById('retry-blogs')?.addEventListener('click', () => {
+                loadBlogs();
+            });
+            return;
         }
         const blogIndex = await response.json();
         console.log('Loaded blog index:', blogIndex);
         
         // Clear loading message
         blogContainer.innerHTML = '';
+        
+        if (blogIndex.length === 0) {
+            blogContainer.innerHTML = '<div class="info">No blog posts found.</div>';
+            blogsLoaded = true;
+            return;
+        }
         
         for (const post of blogIndex) {
             console.log(`Processing blog: ${post.filename}`);
@@ -345,6 +361,17 @@ async function loadBlogs() {
                 }
             } else {
                 console.error(`Failed to fetch content for blog: ${post.filename}`);
+                // Add an error card
+                const errorCard = document.createElement('div');
+                errorCard.className = 'blog-card error-card';
+                errorCard.innerHTML = `
+                    <h3>Error Loading: ${post.title || post.filename}</h3>
+                    <div class="blog-meta">
+                        <span class="date">${post.date || 'No date'}</span>
+                    </div>
+                    <div class="blog-preview">Failed to load content. Please try again later.</div>
+                `;
+                blogContainer.appendChild(errorCard);
             }
         }
         
@@ -352,7 +379,12 @@ async function loadBlogs() {
         blogsLoaded = true;
     } catch (error) {
         console.error('Error loading blogs:', error);
-        blogContainer.innerHTML = '<p>Failed to load blog posts. Please try again later.</p>';
+        blogContainer.innerHTML = `<p>Failed to load blog posts. Please try again later. <button id="retry-blogs">Retry</button></p>`;
+        
+        // Add retry button functionality
+        document.getElementById('retry-blogs')?.addEventListener('click', () => {
+            loadBlogs();
+        });
     }
 }
 
@@ -366,15 +398,30 @@ async function loadProjects() {
     try {
         projectContainer.innerHTML = '<div class="loading">Loading projects...</div>';
         
-        const response = await fetch(`${baseUrl}/_posts/projects/index.json`);
+        const indexPath = `${baseUrl}/_posts/projects/index.json`;
+        console.log(`Fetching projects from: ${indexPath}`);
+        const response = await fetch(indexPath);
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            console.error(`HTTP error when fetching project index! Status: ${response.status}`);
+            projectContainer.innerHTML = `<div class="error">Error loading project index (${response.status}). <button id="retry-projects">Retry</button></div>`;
+            
+            // Add retry button functionality
+            document.getElementById('retry-projects')?.addEventListener('click', () => {
+                loadProjects();
+            });
+            return;
         }
         const projectIndex = await response.json();
         console.log('Loaded project index:', projectIndex);
         
         // Clear loading message
         projectContainer.innerHTML = '';
+        
+        if (projectIndex.length === 0) {
+            projectContainer.innerHTML = '<div class="info">No projects found.</div>';
+            projectsLoaded = true;
+            return;
+        }
         
         for (const project of projectIndex) {
             console.log(`Processing project: ${project.filename}`);
@@ -397,6 +444,19 @@ async function loadProjects() {
                 if (card) {
                     projectContainer.appendChild(card);
                 }
+            } else {
+                console.error(`Failed to fetch content for project: ${project.filename}`);
+                // Add an error card
+                const errorCard = document.createElement('div');
+                errorCard.className = 'project-card error-card';
+                errorCard.innerHTML = `
+                    <h3>Error Loading: ${project.title || project.filename}</h3>
+                    <div class="project-meta">
+                        <span class="date">${project.date || 'No date'}</span>
+                    </div>
+                    <div class="project-preview">Failed to load content. Please try again later.</div>
+                `;
+                projectContainer.appendChild(errorCard);
             }
         }
         
@@ -404,7 +464,12 @@ async function loadProjects() {
         projectsLoaded = true;
     } catch (error) {
         console.error('Error loading projects:', error);
-        projectContainer.innerHTML = '<p>Failed to load projects. Please try again later.</p>';
+        projectContainer.innerHTML = `<p>Failed to load projects. Please try again later. <button id="retry-projects">Retry</button></p>`;
+        
+        // Add retry button functionality
+        document.getElementById('retry-projects')?.addEventListener('click', () => {
+            loadProjects();
+        });
     }
 }
 
@@ -418,15 +483,30 @@ async function loadWork() {
     try {
         workContainer.innerHTML = '<div class="loading">Loading work experience...</div>';
         
-        const response = await fetch(`${baseUrl}/_posts/work/index.json`);
+        const indexPath = `${baseUrl}/_posts/work/index.json`;
+        console.log(`Fetching work experience from: ${indexPath}`);
+        const response = await fetch(indexPath);
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            console.error(`HTTP error when fetching work index! Status: ${response.status}`);
+            workContainer.innerHTML = `<div class="error">Error loading work experience (${response.status}). <button id="retry-work">Retry</button></div>`;
+            
+            // Add retry button functionality
+            document.getElementById('retry-work')?.addEventListener('click', () => {
+                loadWork();
+            });
+            return;
         }
         const workIndex = await response.json();
         console.log('Loaded work index:', workIndex);
         
         // Clear loading message
         workContainer.innerHTML = '';
+        
+        if (workIndex.length === 0) {
+            workContainer.innerHTML = '<div class="info">No work experience found.</div>';
+            workLoaded = true;
+            return;
+        }
         
         for (const entry of workIndex) {
             console.log(`Processing work entry: ${entry.filename}`);
@@ -449,6 +529,19 @@ async function loadWork() {
                 if (card) {
                     workContainer.appendChild(card);
                 }
+            } else {
+                console.error(`Failed to fetch content for work entry: ${entry.filename}`);
+                // Add an error card
+                const errorCard = document.createElement('div');
+                errorCard.className = 'project-card error-card';
+                errorCard.innerHTML = `
+                    <h3>Error Loading: ${entry.title || entry.filename}</h3>
+                    <div class="project-meta">
+                        <span class="date">${entry.date || 'No date'}</span>
+                    </div>
+                    <div class="project-preview">Failed to load content. Please try again later.</div>
+                `;
+                workContainer.appendChild(errorCard);
             }
         }
         
@@ -456,7 +549,12 @@ async function loadWork() {
         workLoaded = true;
     } catch (error) {
         console.error('Error loading work experience:', error);
-        workContainer.innerHTML = '<p>Failed to load work experience. Please try again later.</p>';
+        workContainer.innerHTML = `<p>Failed to load work experience. Please try again later. <button id="retry-work">Retry</button></p>`;
+        
+        // Add retry button functionality
+        document.getElementById('retry-work')?.addEventListener('click', () => {
+            loadWork();
+        });
     }
 }
 
@@ -585,28 +683,79 @@ async function testFetchFiles() {
     console.log('Testing direct file access...');
     
     try {
+        // Check if the _posts directory structure exists
+        console.log(`Current base URL: ${baseUrl}`);
+        console.log(`Testing paths relative to: ${window.location.origin}${baseUrl}`);
+        
         // Test blogs index
-        const blogResponse = await fetch(`${baseUrl}/_posts/blogs/index.json`);
-        console.log('Blogs index fetch status:', blogResponse.status);
+        const blogIndexPath = `${baseUrl}/_posts/blogs/index.json`;
+        console.log(`Testing blog index: ${blogIndexPath}`);
+        const blogResponse = await fetch(blogIndexPath);
+        console.log(`Blogs index fetch status: ${blogResponse.status} (${blogResponse.statusText})`);
         if (blogResponse.ok) {
-            const blogData = await blogResponse.json();
-            console.log('Blog index content:', blogData);
+            try {
+                const blogData = await blogResponse.json();
+                console.log('Blog index content:', blogData);
+            } catch (parseError) {
+                console.error('Failed to parse blog index JSON:', parseError);
+                const blogText = await blogResponse.text();
+                console.log('Raw blog index content:', blogText);
+            }
         }
         
         // Test projects index
-        const projectsResponse = await fetch(`${baseUrl}/_posts/projects/index.json`);
-        console.log('Projects index fetch status:', projectsResponse.status);
+        const projectsIndexPath = `${baseUrl}/_posts/projects/index.json`;
+        console.log(`Testing projects index: ${projectsIndexPath}`);
+        const projectsResponse = await fetch(projectsIndexPath);
+        console.log(`Projects index fetch status: ${projectsResponse.status} (${projectsResponse.statusText})`);
         if (projectsResponse.ok) {
-            const projectsData = await projectsResponse.json();
-            console.log('Projects index content:', projectsData);
+            try {
+                const projectsData = await projectsResponse.json();
+                console.log('Projects index content:', projectsData);
+            } catch (parseError) {
+                console.error('Failed to parse projects index JSON:', parseError);
+                const projectsText = await projectsResponse.text();
+                console.log('Raw projects index content:', projectsText);
+            }
         }
         
         // Test work index
-        const workResponse = await fetch(`${baseUrl}/_posts/work/index.json`);
-        console.log('Work index fetch status:', workResponse.status);
+        const workIndexPath = `${baseUrl}/_posts/work/index.json`;
+        console.log(`Testing work index: ${workIndexPath}`);
+        const workResponse = await fetch(workIndexPath);
+        console.log(`Work index fetch status: ${workResponse.status} (${workResponse.statusText})`);
         if (workResponse.ok) {
-            const workData = await workResponse.json();
-            console.log('Work index content:', workData);
+            try {
+                const workData = await workResponse.json();
+                console.log('Work index content:', workData);
+            } catch (parseError) {
+                console.error('Failed to parse work index JSON:', parseError);
+                const workText = await workResponse.text();
+                console.log('Raw work index content:', workText);
+            }
+        }
+        
+        // Create diagnostic display
+        if (!document.querySelector('.diagnostic-info')) {
+            const debugSection = document.createElement('div');
+            debugSection.className = 'diagnostic-info';
+            debugSection.style.display = 'none';
+            debugSection.innerHTML = `
+                <h3>Diagnostic Information</h3>
+                <p>Base URL: ${baseUrl}</p>
+                <p>Window Location: ${window.location.href}</p>
+                <p>Blog Index: ${blogResponse.status} ${blogResponse.statusText}</p>
+                <p>Projects Index: ${projectsResponse.status} ${projectsResponse.statusText}</p>
+                <p>Work Index: ${workResponse.status} ${workResponse.statusText}</p>
+                <button id="toggle-debug-info">Show/Hide Diagnostic Info</button>
+            `;
+            
+            document.body.appendChild(debugSection);
+            
+            document.getElementById('toggle-debug-info')?.addEventListener('click', () => {
+                const display = debugSection.style.display;
+                debugSection.style.display = display === 'none' ? 'block' : 'none';
+            });
         }
     } catch (error) {
         console.error('File access test failed:', error);
