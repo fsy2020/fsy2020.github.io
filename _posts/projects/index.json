@@ -1,8 +1,8 @@
 [
   {
-    "filename": "hello-world.md",
-    "title": "Hello World Project",
-    "date": "2025-03-24",
-    "tags": ["project", "hello-world"]
+    "filename": "mario.md",
+    "title": "Super Mario Maker 2 Versus Rating Application",
+    "date": "2025-06-26",
+    "tags": ["web-app", "mario", "gaming", "data-visualization"]
   }
 ] 
