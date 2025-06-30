@@ -16,4 +16,4 @@ Though vibe coding can boost productivity, there are several important aspects w
 - Debugging Challenges:  
   I have some debugging skills and can utilize the console to inspect and troubleshoot. However, pinpointing and resolving a bug usually takes multiple attempts. During this process, I might accidentally modify unrelated parts of the code, which can create confusion or introduce new problems.
 
-These challenges highlight the importance of combining AI-assisted coding with critical thinking and manual review to maintain code quality and clarity.
+But in this era, coding is cheap, show me the prompt. :)
