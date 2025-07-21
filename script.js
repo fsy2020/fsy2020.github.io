@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Content Loading Functions
     async function loadContent(section) {
-        dynamicContent.innerHTML = '<div class="loading">Loading...</div>';
+        dynamicContent.innerHTML = '';
         
         try {
             switch(section) {

@@ -118,13 +118,14 @@ main {
     max-width: 1200px;
     margin-left: auto;
     margin-right: auto;
-    min-height: calc(100vh - 160px); /* Ensure minimum height for scrolling */
+    min-height: calc(100vh - 200px); /* Adjusted to account for header and footer */
 }
 
 .hero {
     text-align: center;
-    padding: 4rem 0;
-    height: calc(100vh - 200px);
+    padding: 2rem 0; /* Reduced padding */
+    min-height: calc(100vh - 360px); /* Changed from fixed height to min-height and reduced */
+    max-height: 70vh; /* Added max-height to prevent overflow */
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -286,6 +287,8 @@ h2:after {
     max-width: 800px;
     margin: 0 auto;
     line-height: 1.8;
+    max-height: calc(100vh - 300px); /* Added max-height to prevent overflow */
+    overflow-y: auto; /* Add scroll if content is too long */
 }
 
 footer {
@@ -294,6 +297,85 @@ footer {
     background-color: var(--nav-bg);
     color: var(--blog-meta-color);
     font-size: 0.9rem;
+}
+
+/* Social media links styling */
+.social-links {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.social-links a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    text-decoration: none;
+    transition: all var(--transition-speed);
+    box-shadow: 0 2px 8px var(--shadow-color);
+}
+
+.social-links a:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 15px var(--shadow-color);
+    color: var(--primary-color);
+}
+
+.social-icon {
+    width: 20px;
+    height: 20px;
+    transition: transform var(--transition-speed);
+}
+
+.social-links a:hover .social-icon {
+    transform: scale(1.1);
+}
+
+/* GitHub link styling */
+.social-links a:nth-child(1):hover {
+    background-color: #333;
+    color: white;
+}
+
+/* LinkedIn link styling */
+.social-links a:nth-child(2):hover {
+    background-color: #0077b5;
+    color: white;
+}
+
+/* Twitter link styling */
+.social-links a:nth-child(3):hover {
+    background-color: #1da1f2;
+    color: white;
+}
+
+/* Dark theme adjustments for social links */
+[data-theme="dark"] .social-links a {
+    background-color: var(--nav-bg);
+    border: 1px solid var(--shadow-color);
+}
+
+/* Responsive adjustments for social links */
+@media (max-width: 768px) {
+    .social-links {
+        gap: 1rem;
+    }
+    
+    .social-links a {
+        width: 35px;
+        height: 35px;
+    }
+    
+    .social-icon {
+        width: 18px;
+        height: 18px;
+    }
 }
 
 /* Responsive adjustments */
@@ -312,8 +394,14 @@ footer {
     }
     
     .hero {
-        height: auto;
-        padding: 3rem 0;
+        min-height: calc(100vh - 500px); /* Further reduced for mobile */
+        max-height: 60vh; /* Reduced max-height for mobile */
+        padding: 1rem 0; /* Reduced padding for mobile */
+    }
+    
+    main {
+        padding: 1rem 5%; /* Reduced padding for mobile */
+        margin-top: 120px; /* Increased margin-top to account for taller mobile nav */
     }
 }
 
